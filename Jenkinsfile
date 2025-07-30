@@ -1,12 +1,8 @@
 pipeline {
     agent any
     
-    environment {
-        DOTNET_VERSION = '8.0'
-    }
-    
     stages {
-        stage('Checkout') {
+        stage('SCM') {
             steps {
                 echo 'Checking out source code...'
                 checkout scm
@@ -19,15 +15,11 @@ pipeline {
                 script {
                     if (isUnix()) {
                         sh '''
-                            # Check if .NET is available
                             if ! command -v dotnet &> /dev/null; then
                                 echo "Installing .NET SDK..."
-                                # Download and install .NET SDK
                                 curl -sSL https://dot.net/v1/dotnet-install.sh | bash /dev/stdin --channel 8.0
                                 export PATH="$HOME/.dotnet:$PATH"
                             fi
-                            
-                            # Verify .NET installation
                             dotnet --version
                         '''
                     } else {
@@ -88,4 +80,4 @@ pipeline {
             echo '❌ Build failed!'
         }
     }
-} 
+}
