@@ -1,82 +1,76 @@
 pipeline {
     agent any
     
+    environment {
+        DOTNET_VERSION = '8.0'
+    }
+    
     stages {
-        stage("SCM") {
+        stage('Checkout') {
             steps {
-                echo "Checking out source code..."
+                echo 'Checking out source code...'
                 checkout scm
             }
         }
         
-        stage("Check .NET") {
+        stage('Setup .NET') {
             steps {
-                echo "Checking if .NET is available..."
+                echo 'Setting up .NET environment...'
                 script {
                     if (isUnix()) {
                         sh '''
-                            # Check if .NET is already installed
-                            if command -v dotnet &> /dev/null; then
-                                echo ".NET is already installed"
-                                dotnet --version
-                            else
-                                echo ".NET not found, trying to install..."
-                                # Try using curl instead of wget
-                                if command -v curl &> /dev/null; then
-                                    curl -sSL https://dot.net/v1/dotnet-install.sh | bash /dev/stdin --channel 8.0
-                                    export PATH="$HOME/.dotnet:$PATH"
-                                    $HOME/.dotnet/dotnet --version
-                                else
-                                    echo "Neither wget nor curl available. Using Docker approach..."
-                                    # Use Docker to build
-                                    docker run --rm -v $(pwd):/app -w /app mcr.microsoft.com/dotnet/sdk:8.0 dotnet --version
-                                fi
+                            # Check if .NET is available
+                            if ! command -v dotnet &> /dev/null; then
+                                echo "Installing .NET SDK..."
+                                # Download and install .NET SDK
+                                curl -sSL https://dot.net/v1/dotnet-install.sh | bash /dev/stdin --channel 8.0
+                                export PATH="$HOME/.dotnet:$PATH"
                             fi
+                            
+                            # Verify .NET installation
+                            dotnet --version
                         '''
                     } else {
-                        bat "dotnet --version"
+                        bat 'dotnet --version'
                     }
                 }
             }
         }
         
-        stage("Build") {
+        stage('Restore') {
             steps {
-                echo "Building the application..."
+                echo 'Restoring dependencies...'
                 script {
                     if (isUnix()) {
-                        sh '''
-                            # Try to build with available .NET
-                            if command -v dotnet &> /dev/null; then
-                                dotnet build
-                            else
-                                # Use Docker to build
-                                docker run --rm -v $(pwd):/app -w /app mcr.microsoft.com/dotnet/sdk:8.0 dotnet build
-                            fi
-                        '''
+                        sh 'dotnet restore'
                     } else {
-                        bat "dotnet build"
+                        bat 'dotnet restore'
                     }
                 }
             }
         }
         
-        stage("Test") {
+        stage('Build') {
             steps {
-                echo "Running tests..."
+                echo 'Building application...'
                 script {
                     if (isUnix()) {
-                        sh '''
-                            # Try to test with available .NET
-                            if command -v dotnet &> /dev/null; then
-                                dotnet test --no-build --verbosity normal
-                            else
-                                # Use Docker to test
-                                docker run --rm -v $(pwd):/app -w /app mcr.microsoft.com/dotnet/sdk:8.0 dotnet test --no-build --verbosity normal
-                            fi
-                        '''
+                        sh 'dotnet build --no-restore'
                     } else {
-                        bat "dotnet test --no-build --verbosity normal"
+                        bat 'dotnet build --no-restore'
+                    }
+                }
+            }
+        }
+        
+        stage('Test') {
+            steps {
+                echo 'Running tests...'
+                script {
+                    if (isUnix()) {
+                        sh 'dotnet test --no-build --verbosity normal'
+                    } else {
+                        bat 'dotnet test --no-build --verbosity normal'
                     }
                 }
             }
@@ -84,11 +78,14 @@ pipeline {
     }
     
     post {
+        always {
+            echo 'Pipeline completed!'
+        }
         success {
-            echo "Build succeeded!"
+            echo '✅ Build succeeded!'
         }
         failure {
-            echo "Build failed!"
+            echo '❌ Build failed!'
         }
     }
 } 
