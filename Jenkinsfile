@@ -12,14 +12,26 @@ pipeline {
         stage("Build") {
             steps {
                 echo "Building the application..."
-                bat "dotnet build"
+                script {
+                    if (isUnix()) {
+                        sh "dotnet build"
+                    } else {
+                        bat "dotnet build"
+                    }
+                }
             }
         }
         
         stage("Test") {
             steps {
                 echo "Running tests..."
-                bat "dotnet test --no-build --verbosity normal"
+                script {
+                    if (isUnix()) {
+                        sh "dotnet test --no-build --verbosity normal"
+                    } else {
+                        bat "dotnet test --no-build --verbosity normal"
+                    }
+                }
             }
         }
     }
