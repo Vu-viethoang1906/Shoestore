@@ -15,18 +15,15 @@ pipeline {
                 script {
                     if (isUnix()) {
                         sh '''
-                            # Install .NET Runtime first
-                            curl -sSL https://dot.net/v1/dotnet-install.sh | bash /dev/stdin --channel 8.0 --runtime aspnetcore
-                            
-                            # Install .NET SDK
-                            curl -sSL https://dot.net/v1/dotnet-install.sh | bash /dev/stdin --channel 8.0
-                            
-                            # Set PATH
-                            export PATH="$HOME/.dotnet:$PATH"
-                            export DOTNET_ROOT="$HOME/.dotnet"
+                            # Install .NET using package manager
+                            wget https://packages.microsoft.com/config/ubuntu/20.04/packages-microsoft-prod.deb -O packages-microsoft-prod.deb
+                            sudo dpkg -i packages-microsoft-prod.deb
+                            sudo apt-get update
+                            sudo apt-get install -y apt-transport-https
+                            sudo apt-get install -y dotnet-sdk-8.0
                             
                             # Verify installation
-                            $HOME/.dotnet/dotnet --version
+                            dotnet --version
                         '''
                     } else {
                         bat '''
@@ -43,11 +40,7 @@ pipeline {
                 echo "Building the application..."
                 script {
                     if (isUnix()) {
-                        sh '''
-                            export PATH="$HOME/.dotnet:$PATH"
-                            export DOTNET_ROOT="$HOME/.dotnet"
-                            $HOME/.dotnet/dotnet build
-                        '''
+                        sh "dotnet build"
                     } else {
                         bat "dotnet build"
                     }
@@ -60,11 +53,7 @@ pipeline {
                 echo "Running tests..."
                 script {
                     if (isUnix()) {
-                        sh '''
-                            export PATH="$HOME/.dotnet:$PATH"
-                            export DOTNET_ROOT="$HOME/.dotnet"
-                            $HOME/.dotnet/dotnet test --no-build --verbosity normal
-                        '''
+                        sh "dotnet test --no-build --verbosity normal"
                     } else {
                         bat "dotnet test --no-build --verbosity normal"
                     }
