@@ -1,6 +1,10 @@
 pipeline {
     agent any
     
+    tools {
+        'DotNet' 'dotnet'
+    }
+    
     stages {
         stage('SCM') {
             steps {
@@ -12,14 +16,31 @@ pipeline {
         stage('Build') {
             steps {
                 echo 'Building the project...'
-                bat 'dotnet build'
+                script {
+                    try {
+                        sh 'dotnet --version'
+                        sh 'dotnet build'
+                    } catch (Exception e) {
+                        echo 'Build failed: ' + e.getMessage()
+                        currentBuild.result = 'FAILURE'
+                        error('Build stage failed')
+                    }
+                }
             }
         }
         
         stage('Test') {
             steps {
                 echo 'Running tests...'
-                bat 'dotnet test --no-build --verbosity normal'
+                script {
+                    try {
+                        sh 'dotnet test --no-build --verbosity normal'
+                    } catch (Exception e) {
+                        echo 'Tests failed: ' + e.getMessage()
+                        currentBuild.result = 'FAILURE'
+                        error('Test stage failed')
+                    }
+                }
             }
         }
     }
