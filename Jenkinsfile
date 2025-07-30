@@ -1,6 +1,11 @@
 pipeline {
     agent any
 
+    environment {
+        DOTNET_ROOT = "${env.HOME}/.dotnet"
+        PATH = "${env.HOME}/.dotnet:${env.PATH}"
+    }
+
     stages {
         stage('Checkout') {
             steps {
@@ -15,12 +20,14 @@ pipeline {
                 script {
                     if (isUnix()) {
                         sh '''
-                            if ! command -v dotnet &> /dev/null; then
+                            echo "Checking if dotnet is installed..."
+                            if [ ! -f "$DOTNET_ROOT/dotnet" ]; then
                                 echo "Installing .NET SDK..."
                                 curl -sSL https://dot.net/v1/dotnet-install.sh | bash /dev/stdin --channel 8.0
-                                export PATH="$HOME/.dotnet:$PATH"
                             fi
-                            dotnet --version
+
+                            echo ">>> Kiểm tra dotnet:"
+                            $DOTNET_ROOT/dotnet --info
                         '''
                     } else {
                         bat 'dotnet --version'
@@ -34,7 +41,7 @@ pipeline {
                 echo 'Restoring dependencies...'
                 script {
                     if (isUnix()) {
-                        sh 'dotnet restore'
+                        sh '$DOTNET_ROOT/dotnet restore'
                     } else {
                         bat 'dotnet restore'
                     }
@@ -47,7 +54,7 @@ pipeline {
                 echo 'Building application...'
                 script {
                     if (isUnix()) {
-                        sh 'dotnet build --no-restore'
+                        sh '$DOTNET_ROOT/dotnet build --no-restore'
                     } else {
                         bat 'dotnet build --no-restore'
                     }
@@ -60,7 +67,7 @@ pipeline {
                 echo 'Running tests...'
                 script {
                     if (isUnix()) {
-                        sh 'dotnet test --no-build --verbosity normal'
+                        sh '$DOTNET_ROOT/dotnet test --no-build --verbosity normal'
                     } else {
                         bat 'dotnet test --no-build --verbosity normal'
                     }
