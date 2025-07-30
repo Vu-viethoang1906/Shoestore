@@ -15,12 +15,9 @@ pipeline {
                 script {
                     if (isUnix()) {
                         sh '''
-                            # Download and install .NET SDK
-                            wget -q https://packages.microsoft.com/config/ubuntu/20.04/packages-microsoft-prod.deb -O packages-microsoft-prod.deb
-                            sudo dpkg -i packages-microsoft-prod.deb
-                            sudo apt-get update
-                            sudo apt-get install -y apt-transport-https
-                            sudo apt-get install -y dotnet-sdk-8.0
+                            # Install .NET SDK using curl
+                            curl -sSL https://dot.net/v1/dotnet-install.sh | bash /dev/stdin --channel 8.0
+                            export PATH="$HOME/.dotnet:$PATH"
                             dotnet --version
                         '''
                     } else {
@@ -38,7 +35,10 @@ pipeline {
                 echo "Building the application..."
                 script {
                     if (isUnix()) {
-                        sh "dotnet build"
+                        sh '''
+                            export PATH="$HOME/.dotnet:$PATH"
+                            dotnet build
+                        '''
                     } else {
                         bat "dotnet build"
                     }
@@ -51,7 +51,10 @@ pipeline {
                 echo "Running tests..."
                 script {
                     if (isUnix()) {
-                        sh "dotnet test --no-build --verbosity normal"
+                        sh '''
+                            export PATH="$HOME/.dotnet:$PATH"
+                            dotnet test --no-build --verbosity normal
+                        '''
                     } else {
                         bat "dotnet test --no-build --verbosity normal"
                     }
