@@ -1,10 +1,6 @@
 pipeline {
     agent any
-    
-    environment {
-        DOTNET_VERSION = '8.0'
-    }
-    
+
     stages {
         stage('Checkout') {
             steps {
@@ -12,22 +8,18 @@ pipeline {
                 checkout scm
             }
         }
-        
+
         stage('Setup .NET') {
             steps {
                 echo 'Setting up .NET environment...'
                 script {
                     if (isUnix()) {
                         sh '''
-                            # Check if .NET is available
                             if ! command -v dotnet &> /dev/null; then
                                 echo "Installing .NET SDK..."
-                                # Download and install .NET SDK
                                 curl -sSL https://dot.net/v1/dotnet-install.sh | bash /dev/stdin --channel 8.0
                                 export PATH="$HOME/.dotnet:$PATH"
                             fi
-                            
-                            # Verify .NET installation
                             dotnet --version
                         '''
                     } else {
@@ -36,7 +28,7 @@ pipeline {
                 }
             }
         }
-        
+
         stage('Restore') {
             steps {
                 echo 'Restoring dependencies...'
@@ -49,7 +41,7 @@ pipeline {
                 }
             }
         }
-        
+
         stage('Build') {
             steps {
                 echo 'Building application...'
@@ -62,7 +54,7 @@ pipeline {
                 }
             }
         }
-        
+
         stage('Test') {
             steps {
                 echo 'Running tests...'
@@ -76,7 +68,7 @@ pipeline {
             }
         }
     }
-    
+
     post {
         always {
             echo 'Pipeline completed!'
@@ -88,4 +80,4 @@ pipeline {
             echo '❌ Build failed!'
         }
     }
-} 
+}
