@@ -20,13 +20,16 @@ pipeline {
                 script {
                     if (isUnix()) {
                         sh '''
-                            echo "Checking if dotnet is installed..."
-                            if [ ! -f "$DOTNET_ROOT/dotnet" ]; then
-                                echo "Installing .NET SDK..."
-                                curl -sSL https://dot.net/v1/dotnet-install.sh | bash /dev/stdin --channel 8.0
+                            export DOTNET_ROOT="$HOME/.dotnet"
+                            export PATH="$DOTNET_ROOT:$PATH"
+
+                            echo "Checking if dotnet SDK is installed..."
+                            if [ ! -d "$DOTNET_ROOT/sdk" ]; then
+                                echo "Installing .NET SDK 8.0.412..."
+                                curl -sSL https://dot.net/v1/dotnet-install.sh | bash /dev/stdin --version 8.0.412
                             fi
 
-                            echo ">>> Kiểm tra dotnet:"
+                            echo ">>> dotnet info:"
                             $DOTNET_ROOT/dotnet --info
                         '''
                     } else {
@@ -41,7 +44,11 @@ pipeline {
                 echo 'Restoring dependencies...'
                 script {
                     if (isUnix()) {
-                        sh '$DOTNET_ROOT/dotnet restore'
+                        sh '''
+                            export DOTNET_ROOT="$HOME/.dotnet"
+                            export PATH="$DOTNET_ROOT:$PATH"
+                            $DOTNET_ROOT/dotnet restore
+                        '''
                     } else {
                         bat 'dotnet restore'
                     }
@@ -54,7 +61,11 @@ pipeline {
                 echo 'Building application...'
                 script {
                     if (isUnix()) {
-                        sh '$DOTNET_ROOT/dotnet build --no-restore'
+                        sh '''
+                            export DOTNET_ROOT="$HOME/.dotnet"
+                            export PATH="$DOTNET_ROOT:$PATH"
+                            $DOTNET_ROOT/dotnet build --no-restore
+                        '''
                     } else {
                         bat 'dotnet build --no-restore'
                     }
@@ -67,7 +78,11 @@ pipeline {
                 echo 'Running tests...'
                 script {
                     if (isUnix()) {
-                        sh '$DOTNET_ROOT/dotnet test --no-build --verbosity normal'
+                        sh '''
+                            export DOTNET_ROOT="$HOME/.dotnet"
+                            export PATH="$DOTNET_ROOT:$PATH"
+                            $DOTNET_ROOT/dotnet test --no-build --verbosity normal
+                        '''
                     } else {
                         bat 'dotnet test --no-build --verbosity normal'
                     }
