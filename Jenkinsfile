@@ -12,14 +12,14 @@ pipeline {
         stage("Build") {
             steps {
                 echo "Building the application..."
-                sh "dotnet build"
+                bat "dotnet build"
             }
         }
         
         stage("Test") {
             steps {
                 echo "Running tests..."
-                sh "dotnet test --no-build --verbosity normal"
+                bat "dotnet test --no-build --verbosity normal"
             }
         }
     }
