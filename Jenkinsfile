@@ -15,10 +15,18 @@ pipeline {
                 script {
                     if (isUnix()) {
                         sh '''
-                            # Install .NET SDK using curl
+                            # Install .NET Runtime first
+                            curl -sSL https://dot.net/v1/dotnet-install.sh | bash /dev/stdin --channel 8.0 --runtime aspnetcore
+                            
+                            # Install .NET SDK
                             curl -sSL https://dot.net/v1/dotnet-install.sh | bash /dev/stdin --channel 8.0
+                            
+                            # Set PATH
                             export PATH="$HOME/.dotnet:$PATH"
-                            dotnet --version
+                            export DOTNET_ROOT="$HOME/.dotnet"
+                            
+                            # Verify installation
+                            $HOME/.dotnet/dotnet --version
                         '''
                     } else {
                         bat '''
@@ -37,7 +45,8 @@ pipeline {
                     if (isUnix()) {
                         sh '''
                             export PATH="$HOME/.dotnet:$PATH"
-                            dotnet build
+                            export DOTNET_ROOT="$HOME/.dotnet"
+                            $HOME/.dotnet/dotnet build
                         '''
                     } else {
                         bat "dotnet build"
@@ -53,7 +62,8 @@ pipeline {
                     if (isUnix()) {
                         sh '''
                             export PATH="$HOME/.dotnet:$PATH"
-                            dotnet test --no-build --verbosity normal
+                            export DOTNET_ROOT="$HOME/.dotnet"
+                            $HOME/.dotnet/dotnet test --no-build --verbosity normal
                         '''
                     } else {
                         bat "dotnet test --no-build --verbosity normal"
